@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DASHBOARD | E-Foot Professional</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+--bg: #050505;
+--panel: #111111;
+--panel-hi: #1a1a1a;
+--accent: #00ff85;
+--accent-glow: rgba(0, 255, 133, 0.3);
+--text: #ffffff;
+--text-dim: #777777;
+--danger: #ff3b30;
+--warning: #ffcc00;
+--border: rgba(255, 255, 255, 0.08);
+--radius: 14px;
+--font-main: 'Cairo', sans-serif;
+--transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+    /* Reset & Base */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); }
+    body { 
+        background: var(--bg); color: var(--text); min-height: 100vh; 
+        padding: 20px 20px 100px 20px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout Architecture */
+    .app-container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px; }
+    
+    /* Navigation Bar (Surgical Addition) */
+    .bottom-nav {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: rgba(17, 17, 17, 0.8); backdrop-filter: blur(12px);
+        border: 1px solid var(--border); border-radius: 20px; padding: 10px 15px;
+        display: flex; gap: 10px; z-index: 4000; width: 90%; max-width: 450px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .nav-item {
+        flex: 1; display: flex; flex-direction: column; align-items: center;
+        padding: 8px; border-radius: 12px; cursor: pointer; color: var(--text-dim);
+        transition: var(--transition); font-size: 0.75rem; font-weight: 700;
+    }
+    .nav-item.active { background: var(--panel-hi); color: var(--accent); }
+    .nav-item i { font-size: 1.2rem; margin-bottom: 4px; }
+    
+    /* View Visibility Control */
+    .view-section { display: none; flex-direction: column; gap: 30px; animation: fadeIn 0.4s ease; }
+    .view-section.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Header & Nav */
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+    .logo { font-weight: 900; font-size: 1.4rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+    .logo-dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
+
+    /* Metrics Display */
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .card { 
+        background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); 
+        padding: 24px; position: relative; overflow: hidden; transition: var(--transition);
+    }
+    .card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .card-label { font-size: 0.8rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .card-value { font-size: 1.8rem; font-weight: 800; margin-top: 8px; font-variant-numeric: tabular-nums; }
+    .card-value.green { color: var(--accent); }
+
+    /* Input System */
+    .admin-box { background: var(--panel); border-radius: var(--radius); border: 1px solid var(--border); padding: 30px; }
+    .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 15px; align-items: flex-end; }
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    .input-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-dim); }
+    input, select { 
+        background: #000; border: 1px solid var(--border); border-radius: 10px; 
+        padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: var(--transition);
+    }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    /* Search Styles */
+    .search-bar { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; color: #fff; width: 250px; font-size: 0.85rem; }
+
+    /* Action Buttons */
+    .btn { 
+        padding: 14px 28px; border-radius: 10px; border: none; font-weight: 700; 
+        cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { transform: scale(1.02); filter: brightness(1.1); }
+    .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); font-size: 0.8rem; padding: 8px 16px; }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-sell { background: rgba(0, 255, 133, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; }
+    .btn-sell:hover { background: var(--accent); color: #000; }
+    .btn-edit { background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid var(--border); padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; }
+    .btn-edit:hover { background: #fff; color: #000; }
+    .btn-icon { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border); padding: 6px; border-radius: 6px; cursor: pointer; }
+    .btn-icon:hover { background: var(--accent); color: #000; }
+
+    /* Tables & Ledger */
+    .ledger-wrap { background: var(--panel); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    .ledger-header { padding: 20px 24px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    table { width: 100%; border-collapse: collapse; text-align: right; }
+    th { padding: 15px 24px; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    td { padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.95rem; }
+    tr:last-child td { border-bottom: none; }
+    .id-tag { font-family: monospace; color: var(--text-dim); background: #222; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+    .cust-link { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); cursor: pointer; font-weight: 700; }
+    .cust-link:hover { color: var(--accent); }
+
+    /* Rating Badge */
+    .rating-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+    .rating-trusted { background: rgba(0, 255, 133, 0.1); color: var(--accent); border: 1px solid var(--accent); }
+    .rating-warning { background: rgba(255, 59, 48, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+
+    /* Period Analytics Table */
+    .period-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .period-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .period-row { display: flex; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .period-row:last-child { border-bottom: none; }
+
+    /* Modal Styles */
+    .modal-overlay { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+        display: none; justify-content: center; align-items: center; z-index: 5000;
+    }
+    .modal-content { 
+        background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); 
+        padding: 30px; width: 95%; max-width: 550px; display: flex; flex-direction: column; gap: 20px;
+        max-height: 85vh; overflow-y: auto;
+    }
+
+    /* Invoice Template - Organised Surgical Edit */
+    .invoice-box { background: #fff; color: #000; padding: 30px; border-radius: 8px; font-family: sans-serif; }
+    .invoice-top { border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; text-align: center; }
+    .invoice-top h2 { font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
+    .invoice-details { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 0.9rem; border: 1px solid #eee; padding: 15px; border-radius: 8px; }
+    .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    .invoice-table th { background: #f8f8f8; color: #000; padding: 12px; text-align: right; border-bottom: 2px solid #eee; }
+    .invoice-table td { padding: 15px 12px; border-bottom: 1px solid #eee; font-weight: 600; }
+    .invoice-footer { text-align: center; color: #777; font-size: 0.8rem; border-top: 1px dashed #ccc; padding-top: 20px; }
+
+    /* Notification Toast */
+    #toast { 
+        position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(100px);
+        background: var(--accent); color: #000; padding: 12px 24px; border-radius: 50px; 
+        font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 3000;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Mobile Optimization */
+    @media (max-width: 850px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .btn-primary { width: 100%; justify-content: center; }
+        .metrics { grid-template-columns: 1fr; }
+        .search-bar { width: 100%; }
+    }
+
+    .chart-container { position: relative; height: 260px; width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="switchView('dashboard', this)"><span>📊</span> الأرباح</div>
+    <div class="nav-item" onclick="switchView('add-stock', this)"><span>➕</span> المخزن</div>
+    <div class="nav-item" onclick="switchView('customers', this)"><span>👥</span> العملاء</div>
+</div>
+
+<div class="app-container">
+    <header>
+        <div class="logo"><div class="logo-dot"></div> DASHBOARD</div>
+        <button class="btn btn-danger" id="purge-btn">تصفير السجل</button>
+    </header>
+
+    <div id="view-dashboard" class="view-section active">
+        <main class="metrics" aria-label="Financial Summary">
+            <div class="card"><div class="card-label">قيمة المخزن</div><div class="card-value" id="stat-cost">0</div></div>
+            <div class="card"><div class="card-label">الصافي المحقق</div><div class="card-value green" id="stat-realized">0</div></div>
+            <div class="card"><div class="card-label">العمليات الناجحة</div><div class="card-value" id="stat-count">0</div></div>
+            <div class="card"><div class="card-label">متوسط الربح</div><div class="card-value green" id="stat-avg">0</div></div>
+        </main>
+        
+        <section class="ledger-wrap" style="padding: 24px;">
+            <div class="ledger-header" style="border:none; padding:0 0 20px 0;">أداء الأرباح (آخر 7 أيام)</div>
+            <div class="chart-container"><canvas id="profitChart"></canvas></div>
+        </section>
+
+        <section class="period-grid">
+            <div class="period-card">
+                <div class="ledger-header">تقارير الأرباح</div>
+                <div class="period-row"><span>أرباح اليوم</span><span id="p-day" class="green">0</span></div>
+                <div class="period-row"><span>أرباح الأسبوع</span><span id="p-week" class="green">0</span></div>
+                <div class="period-row"><span>أرباح الشهر</span><span id="p-month" class="green">0</span></div>
+            </div>
+            <div class="period-card">
+                <div class="ledger-header">تقارير المبيعات</div>
+                <div class="period-row"><span>مبيعات اليوم</span><span id="s-day">0</span></div>
+                <div class="period-row"><span>مبيعات الأسبوع</span><span id="s-week">0</span></div>
+                <div class="period-row"><span>مبيعات الشهر</span><span id="s-month">0</span></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="view-add-stock" class="view-section">
+        <section class="admin-box">
+            <form id="tx-form" class="form-grid">
+                <input type="hidden" id="edit-id">
+                <div class="input-group">
+                    <label for="desc">وصف العملية</label>
+                    <input type="text" id="desc" placeholder="مثال: حساب بيس ليفل 100" required autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label for="cost">سعر التكلفة</label>
+                    <input type="number" id="cost" placeholder="0" min="0" required>
+                </div>
+                <div class="input-group">
+                    <label for="profit">العمولة</label>
+                    <input type="number" id="profit" placeholder="0" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="submit-btn">إضافة للمخزن</button>
+            </form>
+        </section>
+
+        <section class="ledger-wrap">
+            <div class="ledger-header">
+                <span>المخزن النشط</span>
+                <input type="text" id="search-input" class="search-bar" placeholder="بحث بالاسم أو الكود...">
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>البيان</th><th>التكلفة</th><th>سعر العرض</th><th>الربح</th><th>إجراء</th></tr>
+                    </thead>
+                    <tbody id="active-rows"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div id="view-customers" class="view-section">
+        <section class="ledger-wrap">
+            <div class="ledger-header">أرشيف المبيعات والعملاء</div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>البيان</th><th>العميل</th><th>القيمة</th><th>الربح الصافي</th><th>فاتورة</th></tr>
+                    </thead>
+                    <tbody id="sold-rows"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="modal-overlay" id="crm-modal">
+    <div class="modal-content">
+        <h3>إتمام عملية البيع</h3>
+        <div class="input-group"><label>اسم المشتري</label><input type="text" id="cust-name"></div>
+        <div class="input-group"><label>رقم الهاتف</label><input type="text" id="cust-phone"></div>
+        <div class="input-group">
+            <label>تقييم العميل</label>
+            <select id="cust-rating"><option value="trusted">موثوق ✅</option><option value="warning">مشاغب ⚠️</option></select>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" style="flex:1" onclick="StateManager.confirmSale()">تأكيد البيع</button>
+            <button class="btn btn-edit" onclick="document.getElementById('crm-modal').style.display='none'">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="cust-profile-modal">
+    <div class="modal-content">
+        <h3 id="profile-name">سجل العميل</h3>
+        <div id="profile-stats" style="display:flex; gap:15px;">
+            <div class="card" style="flex:1; padding:15px;"><div class="card-label">المشتريات</div><div class="card-value" id="profile-total-spent" style="font-size:1.2rem;">0</div></div>
+            <div class="card" style="flex:1; padding:15px;"><div class="card-label">العمليات</div><div class="card-value" id="profile-count" style="font-size:1.2rem;">0</div></div>
+        </div>
+        <div class="ledger-wrap"><table><tbody id="profile-rows"></tbody></table></div>
+        <button class="btn btn-edit" onclick="document.getElementById('cust-profile-modal').style.display='none'">إغلاق</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="invoice-modal">
+    <div class="modal-content" style="max-width:500px; background: #eee;">
+        <div id="invoice-capture" class="invoice-box">
+            <div class="invoice-top">
+                <h2>فاتورة بيع</h2>
+                <p style="font-size:0.8rem; color:#888; margin-top:5px;">رقم العملية: <span id="inv-id-display"></span></p>
+            </div>
+            <div class="invoice-details">
+                <div>
+                    <p style="color:#777; margin-bottom:5px;">إلى العميل:</p>
+                    <p><strong><span id="inv-cust"></span></strong></p>
+                    <p id="inv-phone" style="font-size:0.85rem; color:#444"></p>
+                </div>
+                <div style="text-align:left">
+                    <p style="color:#777; margin-bottom:5px;">التاريخ:</p>
+                    <p id="inv-date"><strong></strong></p>
+                </div>
+            </div>
+            <table class="invoice-table">
+                <thead><tr><th>وصف الخدمة / المنتج</th><th style="text-align:left">السعر الإجمالي</th></tr></thead>
+                <tbody><tr><td id="inv-desc"></td><td id="inv-total" style="text-align:left; color:#000; font-size:1.1rem;"></td></tr></tbody>
+            </table>
+            <div class="invoice-footer">شكراً لثقتك بنا! نتمنى لك تجربة ممتعة.</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" style="flex:1" onclick="window.print()">طباعة / حفظ PDF</button>
+            <button class="btn btn-edit" onclick="document.getElementById('invoice-modal').style.display='none'">إغلاق</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast">تم تحديث البيانات بنجاح</div>
+
+<script>
+    let profitChart = null;
+
+    // View Switcher Utility
+    function switchView(viewId, el) {
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('view-' + viewId).classList.add('active');
+        el.classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    const StateManager = {
+        data: { active: [], sold: [] },
+        pendingSaleId: null,
+        
+        init() {
+            const saved = localStorage.getItem('zenith_db');
+            if (saved) {
+                try {
+                    this.data = JSON.parse(saved);
+                } catch(e) {
+                    this.persist();
+                }
+            }
+            this.initChart();
+            this.syncUI();
+            document.getElementById('search-input').addEventListener('input', () => this.syncUI());
+        },
+
+        persist() {
+            localStorage.setItem('zenith_db', JSON.stringify(this.data));
+            this.syncUI();
+        },
+
+        add(desc, cost, profit) {
+            const editId = document.getElementById('edit-id').value;
+            if(editId) {
+                const idx = this.data.active.findIndex(i => i.id === editId);
+                if(idx > -1) {
+                    this.data.active[idx] = { 
+                        ...this.data.active[idx], 
+                        desc, 
+                        cost: parseFloat(cost), 
+                        profit: parseFloat(profit), 
+                        total: parseFloat(cost) + parseFloat(profit) 
+                    };
+                    document.getElementById('edit-id').value = '';
+                    document.getElementById('submit-btn').innerText = 'إضافة للمخزن';
+                    showToast("تم تعديل البيانات");
+                }
+            } else {
+                const entry = {
+                    id: Math.random().toString(36).substr(2, 5).toUpperCase(),
+                    desc,
+                    cost: parseFloat(cost),
+                    profit: parseFloat(profit),
+                    total: parseFloat(cost) + parseFloat(profit),
+                    ts: Date.now()
+                };
+                this.data.active.unshift(entry);
+                showToast("تمت الإضافة للمخزن");
+            }
+            this.persist();
+        },
+
+        openEdit(id) {
+            const item = this.data.active.find(i => i.id === id);
+            if(item) {
+                document.getElementById('desc').value = item.desc;
+                document.getElementById('cost').value = item.cost;
+                document.getElementById('profit').value = item.profit;
+                document.getElementById('edit-id').value = item.id;
+                document.getElementById('submit-btn').innerText = 'حفظ التعديلات';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        },
+
+        sell(id) {
+            this.pendingSaleId = id;
+            document.getElementById('cust-name').value = '';
+            document.getElementById('cust-phone').value = '';
+            document.getElementById('crm-modal').style.display = 'flex';
+        },
+
+        confirmSale() {
+            const id = this.pendingSaleId;
+            const idx = this.data.active.findIndex(i => i.id === id);
+            if (idx > -1) {
+                const item = this.data.active.splice(idx, 1)[0];
+                item.sold_ts = Date.now();
+                item.customer = {
+                    name: document.getElementById('cust-name').value || 'عميل مجهول',
+                    phone: document.getElementById('cust-phone').value || '-',
+                    rating: document.getElementById('cust-rating').value || 'trusted'
+                };
+                this.data.sold.unshift(item);
+                document.getElementById('crm-modal').style.display = 'none';
+                this.persist();
+                showToast("تم تأكيد عملية البيع");
+            }
+        },
+
+        viewCustomer(name) {
+            if(name === 'عميل مجهول') return;
+            const history = this.data.sold.filter(s => s.customer.name === name);
+            const totalSpent = history.reduce((a, b) => a + b.total, 0);
+            document.getElementById('profile-name').innerText = name;
+            document.getElementById('profile-total-spent').innerText = totalSpent.toLocaleString() + ' ج.م';
+            document.getElementById('profile-count').innerText = history.length;
+            document.getElementById('profile-rows').innerHTML = history.map(h => `
+                <tr>
+                    <td style="font-size:0.85rem">${new Date(h.sold_ts).toLocaleDateString('ar-EG')}</td>
+                    <td style="font-weight:600">${h.desc}</td>
+                    <td style="color:var(--accent)">${h.total.toLocaleString()} ج.م</td>
+                </tr>
+            `).join('');
+            document.getElementById('cust-profile-modal').style.display = 'flex';
+        },
+
+        generateInvoice(id) {
+            const item = this.data.sold.find(s => s.id === id);
+            if(!item) return;
+            document.getElementById('inv-id-display').innerText = item.id;
+            document.getElementById('inv-date').innerText = new Date(item.sold_ts).toLocaleDateString('ar-EG');
+            document.getElementById('inv-cust').innerText = item.customer.name;
+            document.getElementById('inv-phone').innerText = item.customer.phone;
+            document.getElementById('inv-desc').innerText = item.desc;
+            document.getElementById('inv-total').innerText = item.total.toLocaleString() + ' ج.م';
+            document.getElementById('invoice-modal').style.display = 'flex';
+        },
+
+        purge() {
+            if (confirm("تحذير: سيتم مسح جميع البيانات نهائياً. هل أنت متأكد؟")) {
+                this.data = { active: [], sold: [] };
+                this.persist();
+                showToast("تم تصفير السجل");
+            }
+        },
+
+        initChart() {
+            const ctx = document.getElementById('profitChart').getContext('2d');
+            Chart.defaults.font.family = "'Cairo', sans-serif";
+            profitChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'الربح اليومي', data: [], borderColor: '#00ff85', tension: 0.4, fill: true, backgroundColor: 'rgba(0, 255, 133, 0.05)', pointRadius: 4, borderWidth: 3 }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { position: 'right', grid: { color: 'rgba(255,255,255,0.05)' } }, x: { reverse: true, grid: { display: false } } }
+                }
+            });
+        },
+
+        updateChart() {
+            const now = new Date();
+            const labels = [];
+            const values = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now); d.setDate(d.getDate() - i);
+                labels.push(d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }));
+                const dailyProfit = this.data.sold.filter(s => {
+                    const sDate = new Date(s.sold_ts || s.ts);
+                    return sDate.getDate() === d.getDate() && sDate.getMonth() === d.getMonth();
+                }).reduce((a, b) => a + b.profit, 0);
+                values.push(dailyProfit);
+            }
+            profitChart.data.labels = labels;
+            profitChart.data.datasets[0].data = values;
+            profitChart.update('none');
+        },
+
+        syncUI() {
+            const fmt = v => v.toLocaleString('en-US') + ' ج.م';
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            
+            const filteredActive = this.data.active.filter(i => i.desc.toLowerCase().includes(searchQuery) || i.id.toLowerCase().includes(searchQuery));
+
+            document.getElementById('active-rows').innerHTML = filteredActive.map(i => `
+                <tr>
+                    <td><span class="id-tag">${i.id}</span></td>
+                    <td style="font-weight:700">${i.desc}</td>
+                    <td>${fmt(i.cost)}</td>
+                    <td style="color:var(--accent); font-weight:800">${fmt(i.total)}</td>
+                    <td>${fmt(i.profit)}</td>
+                    <td><div style="display:flex; gap:8px;"><button class="btn-sell" onclick="StateManager.sell('${i.id}')">بيع</button><button class="btn-edit" onclick="StateManager.openEdit('${i.id}')">تعديل</button></div></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('sold-rows').innerHTML = this.data.sold.map(i => `
+                <tr>
+                    <td><span class="id-tag">${i.id}</span></td>
+                    <td style="text-decoration:line-through; font-size:0.8rem">${i.desc}</td>
+                    <td><span class="cust-link" onclick="StateManager.viewCustomer('${i.customer?.name}')">${i.customer?.name || '-'}</span> <span class="rating-badge rating-${i.customer?.rating || 'trusted'}">${i.customer?.rating === 'trusted' ? '✓' : '⚠️'}</span></td>
+                    <td>${fmt(i.total)}</td>
+                    <td style="color:var(--accent)">+ ${fmt(i.profit)}</td>
+                    <td><button class="btn-icon" onclick="StateManager.generateInvoice('${i.id}')">📄</button></td>
+                </tr>
+            `).join('');
+
+            const costSum = this.data.active.reduce((a, b) => a + b.cost, 0);
+            const realSum = this.data.sold.reduce((a, b) => a + b.profit, 0);
+            const countSales = this.data.sold.length;
+            const avgProfit = countSales > 0 ? (realSum / countSales) : 0;
+
+            document.getElementById('stat-cost').innerText = fmt(costSum);
+            document.getElementById('stat-realized').innerText = fmt(realSum);
+            document.getElementById('stat-count').innerText = countSales;
+            document.getElementById('stat-avg').innerText = fmt(Math.round(avgProfit));
+
+            const now = Date.now(); const dayMs = 24 * 60 * 60 * 1000;
+            const filterByTime = (ms) => this.data.sold.filter(i => (now - (i.sold_ts || i.ts)) < ms);
+            const salesToday = filterByTime(dayMs);
+            const salesWeek = filterByTime(dayMs * 7);
+            const salesMonth = filterByTime(dayMs * 30);
+
+            document.getElementById('p-day').innerText = fmt(salesToday.reduce((a,b) => a + b.profit, 0));
+            document.getElementById('p-week').innerText = fmt(salesWeek.reduce((a,b) => a + b.profit, 0));
+            document.getElementById('p-month').innerText = fmt(salesMonth.reduce((a,b) => a + b.profit, 0));
+            document.getElementById('s-day').innerText = fmt(salesToday.reduce((a,b) => a + b.total, 0));
+            document.getElementById('s-week').innerText = fmt(salesWeek.reduce((a,b) => a + b.total, 0));
+            document.getElementById('s-month').innerText = fmt(salesMonth.reduce((a,b) => a + b.total, 0));
+
+            this.updateChart();
+        }
+    };
+
+    document.getElementById('tx-form').onsubmit = (e) => {
+        e.preventDefault();
+        StateManager.add(document.getElementById('desc').value, document.getElementById('cost').value, document.getElementById('profit').value);
+        e.target.reset();
+    };
+
+    document.getElementById('purge-btn').onclick = () => StateManager.purge();
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    StateManager.init();
+</script>
+</body>
+</html>
